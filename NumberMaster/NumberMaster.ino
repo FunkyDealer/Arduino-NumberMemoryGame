@@ -3,6 +3,7 @@
 #include <Keypad.h>
 #include <Wire.h>
 #include <DFRobot_LCD.h>
+#include <EEPROM.h>
 #include "pitches.h"
 
 #define ROWS 4
@@ -35,8 +36,8 @@ unsigned char GameState;  // GameState
 
 //Numbers outputing
 int currentLevel = 1;
-int currentAmmountDifficulty = 2;
-int maxAmmountDifficulty = 4;
+int currentAmmountDifficulty = 2; //current ammount of outputed numbers
+int maxAmmountDifficulty = 4; //max ammount of output numbers
 int generatedOutPutNumber = -1; //Machine output number //-1 indicates nothing outputed yet
 int currentInputNumber = -1; //Player input number //-1 indicates nothing inputed yet
 bool isReady = false;
@@ -45,14 +46,15 @@ bool sessionDone = false;
 int timeDifficulty = 300; //Time between numbers showing up
 byte timeCut = 30; //ammount to cut between level
 byte minTimeDifficulty = 50;
-byte wrongs = 0;
-byte gameOverCounter = 0;
+byte wrongs = 0; //ammount of wrongs done in session
+byte gameOverCounter = 0; //2 levels downs in a row = game over
 
 int currentLevelPoints = 0;
 
 //Score
 int currentScore = 0;
-int HighestScore = 0;
+int highScore = 0;
+byte highScoreAdress = 1;
 
 void setup() {
   // initialize
@@ -70,6 +72,8 @@ void setup() {
   lcd.setCursor(0,1);
   lcd.print("Starting!");
 
+  EEPROM.get(highScoreAdress, highScore);
+
   GoToInitiating();
 }
 
@@ -78,7 +82,9 @@ void GoToInitiating()
   GameState = Initiating;
 
   lcd.setCursor(0,0);
-  lcd.print("Welcome!");
+  lcd.print("HighScore: ");
+  lcd.setCursor(11,0);
+  lcd.print(highScore);
 
   lcd.setCursor(0,1);
   lcd.print("Press * to start");
@@ -119,8 +125,7 @@ switch(GameState) {
 } 
 }
 
-void Initialize() {  
-  
+void Initialize() {    
   char key = keypad.getKey();
   
   if (key == '*') {
@@ -352,8 +357,14 @@ void GoToGameOver() {
   lcd.setCursor(8,1);
   lcd.print(currentScore);  
 
-
-  
+  if (currentScore > highScore) {
+  highScore = currentScore;
+  EEPROM.put(highScoreAdress, highScore);
+  lcd.setCursor(0,1);
+  lcd.print("New HiScore: ");
+  lcd.setCursor(13,1);
+  lcd.print(currentScore);  
+  }
 }
 
 
@@ -420,6 +431,7 @@ int Concatenate(int x, int y) {
     return x * pow + y; 
 }
 
+//Get the length of an Int
 int GetIntLength(int x) {   
   return floor(log10(abs(x))) + 1;
 }
